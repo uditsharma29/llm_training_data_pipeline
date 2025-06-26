@@ -69,3 +69,19 @@ USE_REAL_LLM = True
 ```
 
 Now, when you run the pipeline, the refinement script will make real API calls to judge and generate docstrings. Be aware that this will use tokens from your OpenAI account and will incur costs.
+
+## Pipeline Orchestration with Apache Airflow
+
+This project includes a DAG (Directed Acyclic Graph) definition file, making the entire pipeline ready for orchestration with **Apache Airflow**, the industry-standard tool for scheduling and monitoring complex data workflows.
+
+The file `dags/llm_data_pipeline_dag.py` defines the four stages of our pipeline as distinct tasks and sets their dependencies, ensuring they run in the correct order.
+
+### How to Use
+
+You cannot run the DAG file directly. It is designed to be discovered and run by an Airflow scheduler. To use it:
+
+1.  **Set up Airflow:** You would need a running Apache Airflow environment. You can follow the [official Airflow documentation](https://airflow.apache.org/docs/apache-airflow/stable/start/local.html) to set one up locally.
+
+2.  **Deploy the DAG:** Copy or symlink this entire project directory into the `dags` folder of your Airflow installation. Airflow will automatically detect the `llm_data_pipeline_dag.py` file.
+
+3.  **Run the Pipeline:** In the Airflow UI, you will see a new DAG named `llm_data_pipeline`. You can trigger it manually or enable the pre-defined weekly schedule to have it run automatically. The UI will provide a visual representation of the pipeline, monitor its progress, and allow you to inspect logs for each individual task.
