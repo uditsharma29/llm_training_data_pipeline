@@ -11,26 +11,13 @@ def load_config(config_path='config.yaml'):
 
 def extract_file_context_and_functions(file_path):
     """
-    Performs a two-pass analysis on a file.
-    1. First pass gathers all top-level imports and global constants.
-    2. Second pass streams function definitions and prepends the context.
+    Performs a two-pass analysis on a file, with a chunking strategy for large functions.
     """
     with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
         content = f.read()
 
     # --- Pass 1: Gather Context ---
-    context_nodes = []
-    try:
-        tree = ast.parse(content)
-        for node in tree.body:
-            # We'll grab imports and simple global variable assignments
-            if isinstance(node, (ast.Import, ast.ImportFrom, ast.Assign)):
-                context_nodes.append(node)
-    except (SyntaxError, IndexError):
-        # If the file is not valid python, we can't get context.
-        context_nodes = []
-    
-    context_header = ast.unparse(context_nodes) if context_nodes else ""
+    context_header = get_file_context(content)
 
     # --- Pass 2: Stream and Extract Functions ---
     for code_chunk in stream_and_parse_definitions(content.splitlines(True)):
@@ -38,17 +25,51 @@ def extract_file_context_and_functions(file_path):
             tree = ast.parse(code_chunk)
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef):
-                    docstring = ast.get_docstring(node)
-                    if docstring:
-                        function_source = ast.unparse(node)
-                        # Prepend the context header to the function source
-                        full_completion = context_header + "\\n\\n" + function_source
-                        yield {
-                            "prompt": docstring.strip(),
-                            "completion": full_completion
-                        }
+                    # Check if the function itself is oversized
+                    if len(ast.unparse(node).encode('utf-8')) > 2 * 1024 * 1024:
+                        print(f"  [INFO] Oversized function '{node.name}' found. Applying chunking strategy.")
+                        # Use a generator to yield chunks from the oversized function
+                        yield from chunk_large_function(node, context_header)
+                    else:
+                        # Process normal-sized functions
+                        docstring = ast.get_docstring(node)
+                        if docstring:
+                            function_source = ast.unparse(node)
+                            full_completion = context_header + "\\n\\n" + function_source if context_header else function_source
+                            yield {
+                                "prompt": docstring.strip(),
+                                "completion": full_completion
+                            }
         except (SyntaxError, IndexError):
             continue
+
+def get_file_context(content):
+    """Parses content to find top-level imports and global constants."""
+    try:
+        tree = ast.parse(content)
+        context_nodes = [node for node in tree.body if isinstance(node, (ast.Import, ast.ImportFrom, ast.Assign))]
+        return ast.unparse(context_nodes) if context_nodes else ""
+    except (SyntaxError, IndexError):
+        return ""
+
+def chunk_large_function(function_node, context_header):
+    """
+    Breaks a large function into smaller, logical chunks (e.g., loops, conditionals)
+    and yields them as new data points with AI-generated prompts.
+    """
+    for node in function_node.body:
+        # We are interested in major compound statements
+        if isinstance(node, (ast.For, ast.While, ast.If, ast.With)):
+            chunk_source = ast.unparse(node)
+            
+            # Simulate an LLM call to generate a relevant prompt for this chunk
+            chunk_prompt = f"This is a code chunk from the function '{function_node.name}'. It contains a '{type(node).__name__}' block. Explain, refactor, or complete this code."
+
+            full_completion = context_header + "\\n\\n" + chunk_source if context_header else chunk_source
+            yield {
+                "prompt": chunk_prompt,
+                "completion": full_completion
+            }
 
 def stream_and_parse_definitions(lines):
     """

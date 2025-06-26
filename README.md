@@ -9,7 +9,8 @@ The pipeline is divided into four main, automated stages:
 1.  **Extraction (`scripts/extract_from_repo.py`)**:
     -   Simulates processing a raw source, in this case a repository of Python code (`data/raw_code_repo/`).
     -   It uses a **context-aware, two-pass static analysis** to create self-contained, runnable code snippets. The first pass gathers all file-level imports and global constants.
-    -   The second pass uses a memory-efficient streaming parser to extract individual functions, then prepends the file-level context to each one.
+    -   The second pass uses a memory-efficient streaming parser to extract individual functions.
+    -   **Advanced Chunking for Large Functions:** If a function's source code exceeds a size threshold (e.g., 2MB), it is automatically broken down into smaller, logical code chunks (loops, conditionals, etc.). A new, specific prompt is then programmatically generated for each chunk. This turns a single, low-quality data point into multiple, high-quality, focused ones.
     -   The output is a structured `.jsonl` file of `{prompt, completion}` pairs, where the docstring is the prompt and the full, context-aware code snippet is the completion.
 
 2.  **LLM-Powered Refinement (Simulation) (`scripts/simulate_llm_refinement.py`)**:
@@ -28,6 +29,7 @@ The pipeline is divided into four main, automated stages:
 This project serves as a practical example for the following MLOps concepts:
 - Building multi-stage, chained data pipelines.
 - Processing truly raw data sources (like code repositories) with context-aware static analysis.
+- Handling edge cases like oversized functions with an intelligent chunking strategy.
 - Ensuring data quality through validation and LLM-based refinement (simulated).
 - Creating reusable, config-driven pipeline components.
 - Preparing data for LLM fine-tuning from start to finish.
