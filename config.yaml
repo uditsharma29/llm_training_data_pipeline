@@ -1,0 +1,6 @@
+data:
+  raw_repo_path: data/raw_code_repo
+  extracted_path: data/intermediate/extracted_pairs.jsonl
+  llm_refined_path: data/llm_refined/refined_pairs.jsonl
+  final_alpaca_path: data/processed/processed_data.jsonl
+  tokenized_path: data/tokenized 

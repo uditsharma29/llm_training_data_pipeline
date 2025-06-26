@@ -1,0 +1,6 @@
+{"prompt": "Create a Python function that takes a list of numbers and returns the sum.", "completion": "def calculate_sum(numbers):\n  total = 0\n  for number in numbers:\n    total += number\n  return total"}
+{"prompt": "Write a Python function to check if a number is prime.", "completion": "def is_prime(n):\n  if n <= 1:\n    return False\n  for i in range(2, int(n**0.5) + 1):\n    if n % i == 0:\n      return False\n  return True"}
+{"prompt": "Generate a Python script to read a CSV file named 'data.csv' and print its content.", "completion": "import pandas as pd\n\ndf = pd.read_csv('data.csv')\nprint(df)"}
+{"prompt": "Define a Python class for a 'Customer' with 'name' and 'email' attributes.", "completion": "class Customer:\n  def __init__(self, name, email):\n    self.name = name\n    self.email = email"}
+{"prompt": "Write a Python function that calculates the factorial of a number.", "completion": "def factorial(n):\n    if n == 0:\n        return 1\n    else:\n        return n * factorial(n-1)"}
+{"prompt": "This is a deliberately broken function.", "completion": "def broken_function(x)\n  return x + 1"} 

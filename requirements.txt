@@ -1,0 +1,8 @@
+pandas
+pyyaml
+pytest
+transformers
+datasets
+accelerate
+torch
+openai
